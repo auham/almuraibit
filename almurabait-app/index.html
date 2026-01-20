@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="دعوات زواج عائلة المريبيط - تطبيق لعرض ومشاركة دعوات الزواج وأخبار القبيلة">
+  <meta name="theme-color" content="#D4AF37">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="المريبيط">
+  
+  <title>دعوات المريبيط</title>
+  
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="css/style.css">
+  
+  <!-- Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-content">
+      <div class="logo">م</div>
+      <div class="header-title">
+        <h1>عائلة المريبيط</h1>
+        <p>دعوات الزواج والمناسبات</p>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Install Banner -->
+    <div class="install-banner" id="installBanner">
+      <button class="install-close" onclick="closeInstallBanner()">✕</button>
+      <div class="install-banner-content">
+        <h3>📲 أضف التطبيق للشاشة الرئيسية</h3>
+        <p>للوصول السريع والإشعارات الفورية</p>
+        <div class="install-steps">
+          <div class="install-step">
+            <span class="step-number">1</span>
+            <span>اضغط على زر المشاركة <strong>⎙</strong> في الأسفل</span>
+          </div>
+          <div class="install-step">
+            <span class="step-number">2</span>
+            <span>اختر <strong>"إضافة إلى الشاشة الرئيسية"</strong></span>
+          </div>
+          <div class="install-step">
+            <span class="step-number">3</span>
+            <span>اضغط <strong>"إضافة"</strong> للتأكيد</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Invitations Section -->
+    <section class="section">
+      <div class="section-title">
+        <span class="icon">💒</span>
+        <h2>دعوات الزواج القادمة</h2>
+      </div>
+      
+      <div class="invitations-grid" id="invitationsGrid">
+        <!-- Loading State -->
+        <div class="loading" id="loadingState">
+          <div class="spinner"></div>
+        </div>
+        
+        <!-- Empty State (hidden by default) -->
+        <div class="empty-state" id="emptyState" style="display: none;">
+          <div class="icon">💍</div>
+          <h3>لا توجد دعوات قادمة</h3>
+          <p>سيتم إضافة الدعوات الجديدة هنا</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <div class="nav-container">
+      <a href="index.html" class="nav-item active">
+        <span class="icon">💒</span>
+        <span>الدعوات</span>
+      </a>
+      <a href="news.html" class="nav-item">
+        <span class="icon">📰</span>
+        <span>الأخبار</span>
+      </a>
+      <a href="admin.html" class="nav-item">
+        <span class="icon">⚙️</span>
+        <span>الإدارة</span>
+      </a>
+    </div>
+  </nav>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast"></div>
+
+  <script src="js/supabase.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    // Register Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js')
+          .then(registration => {
+            console.log('SW registered:', registration);
+          })
+          .catch(error => {
+            console.log('SW registration failed:', error);
+          });
+      });
+    }
+
+    // Check if already installed as PWA
+    if (window.matchMedia('(display-mode: standalone)').matches || 
+        window.navigator.standalone === true) {
+      document.getElementById('installBanner').style.display = 'none';
+    }
+
+    // Check localStorage for banner dismissal
+    if (localStorage.getItem('installBannerDismissed')) {
+      document.getElementById('installBanner').style.display = 'none';
+    }
+
+    function closeInstallBanner() {
+      document.getElementById('installBanner').style.display = 'none';
+      localStorage.setItem('installBannerDismissed', 'true');
+    }
+
+    // Load invitations on page load
+    document.addEventListener('DOMContentLoaded', loadInvitations);
+
+    async function loadInvitations() {
+      const grid = document.getElementById('invitationsGrid');
+      const loading = document.getElementById('loadingState');
+      const empty = document.getElementById('emptyState');
+
+      try {
+        const invitations = await getUpcomingInvitations();
+        loading.style.display = 'none';
+
+        if (invitations.length === 0) {
+          empty.style.display = 'block';
+          return;
+        }
+
+        grid.innerHTML = invitations.map(inv => createInvitationCard(inv)).join('');
+      } catch (error) {
+        loading.style.display = 'none';
+        grid.innerHTML = `
+          <div class="empty-state">
+            <div class="icon">⚠️</div>
+            <h3>حدث خطأ</h3>
+            <p>تعذر تحميل الدعوات، يرجى المحاولة لاحقاً</p>
+          </div>
+        `;
+      }
+    }
+
+    function createInvitationCard(invitation) {
+      const date = new Date(invitation.wedding_date);
+      const day = date.getDate();
+      const month = date.toLocaleDateString('ar-SA', { month: 'short' });
+      const formattedDate = date.toLocaleDateString('ar-SA', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+      
+      return `
+        <article class="invitation-card" onclick="window.location.href='invitation.html?id=${invitation.id}'">
+          ${invitation.image_url 
+            ? `<img src="${invitation.image_url}" alt="صورة الدعوة" class="card-image">`
+            : `<div class="card-image-placeholder">💒</div>`
+          }
+          <div class="card-content">
+            <div class="card-header">
+              <div>
+                <h3 class="groom-name">${invitation.groom_name}</h3>
+                ${invitation.groom_father ? `<p class="groom-father">ابن ${invitation.groom_father}</p>` : ''}
+              </div>
+              <div class="card-date">
+                <div class="day">${day}</div>
+                <div class="month">${month}</div>
+              </div>
+            </div>
+            <div class="card-details">
+              <div class="card-detail">
+                <span class="icon">📅</span>
+                <span>${formattedDate}</span>
+              </div>
+              ${invitation.wedding_time ? `
+                <div class="card-detail">
+                  <span class="icon">🕐</span>
+                  <span>${invitation.wedding_time}</span>
+                </div>
+              ` : ''}
+              ${invitation.location_name ? `
+                <div class="card-detail">
+                  <span class="icon">📍</span>
+                  <span>${invitation.location_name}</span>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        </article>
+      `;
+    }
+  </script>
+</body>
+</html>

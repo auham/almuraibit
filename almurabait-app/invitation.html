@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="تفاصيل دعوة الزواج">
+    <meta name="theme-color" content="#D4AF37">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="المريبيط">
+
+    <title>تفاصيل الدعوة - المريبيط</title>
+
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="icons/icon-192.png">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <link rel="stylesheet" href="css/style.css">
+
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Google Maps (add your API key) -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&language=ar"></script>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">م</div>
+            <div class="header-title">
+                <h1>تفاصيل الدعوة</h1>
+                <p>عائلة المريبيط</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content invitation-detail">
+        <!-- Loading State -->
+        <div class="loading" id="loadingState">
+            <div class="spinner"></div>
+        </div>
+
+        <!-- Invitation Details (populated by JS) -->
+        <div id="invitationContent" style="display: none;">
+            <a href="index.html" class="back-btn">→ العودة للدعوات</a>
+
+            <!-- Hero Image -->
+            <div class="detail-hero" id="heroSection">
+                <div class="detail-hero-placeholder">💒</div>
+                <div class="detail-hero-overlay"></div>
+            </div>
+
+            <!-- Content -->
+            <div class="detail-content">
+                <span class="detail-badge">دعوة زواج</span>
+                <h1 class="detail-groom" id="groomName"></h1>
+                <p class="detail-father" id="groomFather"></p>
+
+                <!-- Info Cards -->
+                <div class="detail-info">
+                    <div class="detail-info-item">
+                        <span class="icon">📅</span>
+                        <div class="info">
+                            <div class="label">تاريخ الحفل</div>
+                            <div class="value" id="weddingDate"></div>
+                        </div>
+                    </div>
+                    <div class="detail-info-item" id="timeItem" style="display: none;">
+                        <span class="icon">🕐</span>
+                        <div class="info">
+                            <div class="label">الوقت</div>
+                            <div class="value" id="weddingTime"></div>
+                        </div>
+                    </div>
+                    <div class="detail-info-item" id="locationItem" style="display: none;">
+                        <span class="icon">📍</span>
+                        <div class="info">
+                            <div class="label">المكان</div>
+                            <div class="value" id="locationName"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div class="detail-description" id="description" style="display: none;"></div>
+
+                <!-- Map -->
+                <div class="map-container" id="mapContainer" style="display: none;">
+                    <div class="map-header">
+                        <span class="icon">🗺️</span>
+                        <h3>موقع الحفل</h3>
+                    </div>
+                    <div id="map"></div>
+                    <div class="map-actions">
+                        <a href="#" class="btn btn-primary" id="directionsBtn" target="_blank">
+                            <span>🧭</span>
+                            <span>الاتجاهات</span>
+                        </a>
+                        <button class="btn btn-secondary" onclick="shareLocation()">
+                            <span>📤</span>
+                            <span>مشاركة الموقع</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Share Button -->
+                <button class="btn btn-primary btn-block" onclick="shareInvitation()">
+                    <span>📤</span>
+                    <span>مشاركة الدعوة</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Error State -->
+        <div class="empty-state" id="errorState" style="display: none;">
+            <div class="icon">⚠️</div>
+            <h3>الدعوة غير موجودة</h3>
+            <p>تعذر العثور على هذه الدعوة</p>
+            <a href="index.html" class="btn btn-primary" style="margin-top: 1rem;">العودة للرئيسية</a>
+        </div>
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <div class="nav-container">
+            <a href="index.html" class="nav-item active">
+                <span class="icon">💒</span>
+                <span>الدعوات</span>
+            </a>
+            <a href="news.html" class="nav-item">
+                <span class="icon">📰</span>
+                <span>الأخبار</span>
+            </a>
+            <a href="admin.html" class="nav-item">
+                <span class="icon">⚙️</span>
+                <span>الإدارة</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast"></div>
+
+    <script src="js/supabase.js"></script>
+    <script>
+        let currentInvitation = null;
+        let map = null;
+
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js');
+        }
+
+        // Get invitation ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const invitationId = urlParams.get('id');
+
+        // Load invitation on page load
+        document.addEventListener('DOMContentLoaded', loadInvitation);
+
+        async function loadInvitation() {
+            const loading = document.getElementById('loadingState');
+            const content = document.getElementById('invitationContent');
+            const error = document.getElementById('errorState');
+
+            if (!invitationId) {
+                loading.style.display = 'none';
+                error.style.display = 'block';
+                return;
+            }
+
+            try {
+                const invitation = await getInvitationById(invitationId);
+                loading.style.display = 'none';
+
+                if (!invitation) {
+                    error.style.display = 'block';
+                    return;
+                }
+
+                currentInvitation = invitation;
+                displayInvitation(invitation);
+                content.style.display = 'block';
+            } catch (err) {
+                loading.style.display = 'none';
+                error.style.display = 'block';
+            }
+        }
+
+        function displayInvitation(invitation) {
+            // Hero image
+            const heroSection = document.getElementById('heroSection');
+            if (invitation.image_url) {
+                heroSection.innerHTML = `
+          <img src="${invitation.image_url}" alt="صورة الدعوة">
+          <div class="detail-hero-overlay"></div>
+        `;
+            }
+
+            // Groom info
+            document.getElementById('groomName').textContent = invitation.groom_name;
+            if (invitation.groom_father) {
+                document.getElementById('groomFather').textContent = `ابن ${invitation.groom_father}`;
+            }
+
+            // Date
+            const date = new Date(invitation.wedding_date);
+            const formattedDate = date.toLocaleDateString('ar-SA', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            document.getElementById('weddingDate').textContent = formattedDate;
+
+            // Time
+            if (invitation.wedding_time) {
+                document.getElementById('timeItem').style.display = 'flex';
+                document.getElementById('weddingTime').textContent = invitation.wedding_time;
+            }
+
+            // Location
+            if (invitation.location_name) {
+                document.getElementById('locationItem').style.display = 'flex';
+                document.getElementById('locationName').textContent = invitation.location_name;
+            }
+
+            // Description
+            if (invitation.description) {
+                document.getElementById('description').style.display = 'block';
+                document.getElementById('description').textContent = invitation.description;
+            }
+
+            // Map
+            if (invitation.location_lat && invitation.location_lng) {
+                document.getElementById('mapContainer').style.display = 'block';
+                initMap(invitation.location_lat, invitation.location_lng, invitation.location_name);
+
+                // Set directions link
+                const directionsBtn = document.getElementById('directionsBtn');
+                directionsBtn.href = `https://www.google.com/maps/dir/?api=1&destination=${invitation.location_lat},${invitation.location_lng}`;
+            }
+        }
+
+        function initMap(lat, lng, title) {
+            const location = { lat: parseFloat(lat), lng: parseFloat(lng) };
+
+            try {
+                map = new google.maps.Map(document.getElementById('map'), {
+                    zoom: 15,
+                    center: location,
+                    styles: [
+                        { elementType: 'geometry', stylers: [{ color: '#1a1a2e' }] },
+                        { elementType: 'labels.text.stroke', stylers: [{ color: '#1a1a2e' }] },
+                        { elementType: 'labels.text.fill', stylers: [{ color: '#D4AF37' }] },
+                        { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#252542' }] },
+                        { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0f0f1a' }] }
+                    ]
+                });
+
+                new google.maps.Marker({
+                    position: location,
+                    map: map,
+                    title: title || 'موقع الحفل'
+                });
+            } catch (e) {
+                // If Google Maps fails, show a link instead
+                document.getElementById('map').innerHTML = `
+          <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-secondary);">
+            <p>تعذر تحميل الخريطة</p>
+          </div>
+        `;
+            }
+        }
+
+        function shareInvitation() {
+            if (!currentInvitation) return;
+
+            const date = new Date(currentInvitation.wedding_date);
+            const formattedDate = date.toLocaleDateString('ar-SA', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+
+            const text = `💒 دعوة زواج
+
+العريس: ${currentInvitation.groom_name}
+${currentInvitation.groom_father ? `ابن: ${currentInvitation.groom_father}` : ''}
+📅 التاريخ: ${formattedDate}
+${currentInvitation.wedding_time ? `🕐 الوقت: ${currentInvitation.wedding_time}` : ''}
+${currentInvitation.location_name ? `📍 المكان: ${currentInvitation.location_name}` : ''}
+
+تشرفنا بحضوركم 🌹
+
+${window.location.href}`;
+
+            if (navigator.share) {
+                navigator.share({
+                    title: `دعوة زواج - ${currentInvitation.groom_name}`,
+                    text: text,
+                    url: window.location.href
+                });
+            } else {
+                navigator.clipboard.writeText(text);
+                showToast('تم نسخ الدعوة 📋');
+            }
+        }
+
+        function shareLocation() {
+            if (!currentInvitation || !currentInvitation.location_lat) return;
+
+            const url = `https://www.google.com/maps?q=${currentInvitation.location_lat},${currentInvitation.location_lng}`;
+
+            if (navigator.share) {
+                navigator.share({
+                    title: `موقع حفل زواج ${currentInvitation.groom_name}`,
+                    text: currentInvitation.location_name || 'موقع الحفل',
+                    url: url
+                });
+            } else {
+                navigator.clipboard.writeText(url);
+                showToast('تم نسخ الرابط 📋');
+            }
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+    </script>
+</body>
+
+</html>

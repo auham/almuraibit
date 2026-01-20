@@ -27,6 +27,8 @@
         OneSignalDeferred.push(async function (OneSignal) {
             await OneSignal.init({
                 appId: "8e7eb41f-67fb-4bd4-ae98-28203c5bb5ec",
+                serviceWorkerPath: "OneSignalSDKWorker.js",
+                serviceWorkerParam: { scope: "/almuraibit/" }
             });
         });
     </script>

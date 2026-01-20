@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="لوحة تحكم المسؤول - دعوات المريبيط">
+    <meta name="theme-color" content="#D4AF37">
+    <meta name="robots" content="noindex, nofollow">
+
+    <title>لوحة التحكم - المريبيط</title>
+
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="icons/icon-192.png">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <link rel="stylesheet" href="css/style.css">
+
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">م</div>
+            <div class="header-title">
+                <h1>لوحة التحكم</h1>
+                <p>إدارة الدعوات والأخبار</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Login Container -->
+    <div class="login-container" id="loginContainer">
+        <h2>🔐 تسجيل الدخول</h2>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="email">البريد الإلكتروني</label>
+                <input type="email" id="email" required placeholder="admin@example.com">
+            </div>
+            <div class="form-group">
+                <label for="password">كلمة المرور</label>
+                <input type="password" id="password" required placeholder="••••••••">
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">
+                <span>دخول</span>
+            </button>
+        </form>
+        <p id="loginError" style="color: #dc3545; text-align: center; margin-top: 1rem; display: none;"></p>
+    </div>
+
+    <!-- Admin Container (hidden until login) -->
+    <div class="admin-container" id="adminContainer" style="display: none;">
+        <!-- Logout Button -->
+        <div style="text-align: left; margin-bottom: 1rem;">
+            <button class="btn btn-secondary" onclick="handleLogout()" style="padding: 0.5rem 1rem;">
+                🚪 تسجيل الخروج
+            </button>
+        </div>
+
+        <!-- Tabs -->
+        <div class="admin-tabs">
+            <button class="admin-tab active" onclick="switchTab('invitations')">💒 الدعوات</button>
+            <button class="admin-tab" onclick="switchTab('news')">📰 الأخبار</button>
+        </div>
+
+        <!-- Invitations Section -->
+        <section class="admin-section active" id="invitationsSection">
+            <!-- Add Invitation Form -->
+            <div class="admin-card">
+                <h3>➕ إضافة دعوة جديدة</h3>
+                <form id="invitationForm">
+                    <div class="form-group">
+                        <label for="groomName">اسم العريس *</label>
+                        <input type="text" id="groomName" required placeholder="محمد أحمد المريبيط">
+                    </div>
+                    <div class="form-group">
+                        <label for="groomFather">اسم والد العريس</label>
+                        <input type="text" id="groomFather" placeholder="أحمد عبدالله المريبيط">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="weddingDate">تاريخ الحفل *</label>
+                            <input type="date" id="weddingDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="weddingTime">وقت الحفل</label>
+                            <input type="time" id="weddingTime">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="locationName">اسم المكان</label>
+                        <input type="text" id="locationName" placeholder="قاعة الفرح - الرياض">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="locationLat">خط العرض (Latitude)</label>
+                            <input type="number" step="any" id="locationLat" placeholder="24.7136">
+                        </div>
+                        <div class="form-group">
+                            <label for="locationLng">خط الطول (Longitude)</label>
+                            <input type="number" step="any" id="locationLng" placeholder="46.6753">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <button type="button" class="btn btn-secondary btn-block" onclick="openGoogleMaps()">
+                            🗺️ اختيار الموقع من الخريطة
+                        </button>
+                    </div>
+                    <div class="form-group">
+                        <label for="description">الوصف (اختياري)</label>
+                        <textarea id="description" placeholder="تفاصيل إضافية عن الحفل..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="imageUrl">رابط الصورة (اختياري)</label>
+                        <input type="url" id="imageUrl" placeholder="https://example.com/image.jpg">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">
+                        <span>💒</span>
+                        <span>إضافة الدعوة</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Invitations List -->
+            <div class="admin-card">
+                <h3>📋 الدعوات الحالية</h3>
+                <div class="admin-list" id="invitationsList">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- News Section -->
+        <section class="admin-section" id="newsSection">
+            <!-- Add News Form -->
+            <div class="admin-card">
+                <h3>➕ إضافة خبر جديد</h3>
+                <form id="newsForm">
+                    <div class="form-group">
+                        <label for="newsTitle">عنوان الخبر *</label>
+                        <input type="text" id="newsTitle" required placeholder="عنوان الخبر">
+                    </div>
+                    <div class="form-group">
+                        <label for="newsContent">المحتوى</label>
+                        <textarea id="newsContent" placeholder="تفاصيل الخبر..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="newsImageUrl">رابط الصورة (اختياري)</label>
+                        <input type="url" id="newsImageUrl" placeholder="https://example.com/image.jpg">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">
+                        <span>📰</span>
+                        <span>إضافة الخبر</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- News List -->
+            <div class="admin-card">
+                <h3>📋 الأخبار الحالية</h3>
+                <div class="admin-list" id="newsList">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <div class="nav-container">
+            <a href="index.html" class="nav-item">
+                <span class="icon">💒</span>
+                <span>الدعوات</span>
+            </a>
+            <a href="news.html" class="nav-item">
+                <span class="icon">📰</span>
+                <span>الأخبار</span>
+            </a>
+            <a href="admin.html" class="nav-item active">
+                <span class="icon">⚙️</span>
+                <span>الإدارة</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast"></div>
+
+    <script src="js/supabase.js"></script>
+    <script>
+        // Check authentication on page load
+        document.addEventListener('DOMContentLoaded', checkAuth);
+
+        async function checkAuth() {
+            const session = await getSession();
+            if (session) {
+                showAdminPanel();
+                loadAdminData();
+            }
+        }
+
+        function showAdminPanel() {
+            document.getElementById('loginContainer').style.display = 'none';
+            document.getElementById('adminContainer').style.display = 'block';
+        }
+
+        function showLoginForm() {
+            document.getElementById('loginContainer').style.display = 'block';
+            document.getElementById('adminContainer').style.display = 'none';
+        }
+
+        // Login Form
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorEl = document.getElementById('loginError');
+
+            try {
+                await signIn(email, password);
+                errorEl.style.display = 'none';
+                showAdminPanel();
+                loadAdminData();
+                showToast('تم تسجيل الدخول بنجاح ✅', 'success');
+            } catch (error) {
+                console.error('Login error:', error);
+                // Show the actual error message from Supabase
+                let errorMessage = 'خطأ في تسجيل الدخول';
+                if (error.message) {
+                    if (error.message.includes('Invalid login credentials')) {
+                        errorMessage = 'البريد الإلكتروني أو كلمة المرور غير صحيحة';
+                    } else if (error.message.includes('Email not confirmed')) {
+                        errorMessage = 'يرجى تأكيد البريد الإلكتروني أولاً';
+                    } else if (error.message.includes('User not found')) {
+                        errorMessage = 'المستخدم غير موجود';
+                    } else {
+                        errorMessage = error.message;
+                    }
+                }
+                errorEl.textContent = errorMessage;
+                errorEl.style.display = 'block';
+            }
+        });
+
+        async function handleLogout() {
+            await signOut();
+            showLoginForm();
+            showToast('تم تسجيل الخروج', 'success');
+        }
+
+        // Tab Switching
+        function switchTab(tab) {
+            document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+
+            document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
+            document.getElementById(`${tab}Section`).classList.add('active');
+        }
+
+        // Load Admin Data
+        async function loadAdminData() {
+            loadInvitationsList();
+            loadNewsList();
+        }
+
+        // Invitations
+        async function loadInvitationsList() {
+            const list = document.getElementById('invitationsList');
+            try {
+                const invitations = await getInvitations();
+                if (invitations.length === 0) {
+                    list.innerHTML = '<div class="empty-state"><p>لا توجد دعوات</p></div>';
+                    return;
+                }
+                list.innerHTML = invitations.map(inv => `
+          <div class="admin-list-item">
+            <div class="item-info">
+              <h4>${inv.groom_name}</h4>
+              <p>📅 ${new Date(inv.wedding_date).toLocaleDateString('ar-SA')}</p>
+            </div>
+            <div class="item-actions">
+              <button class="btn-icon delete" onclick="handleDeleteInvitation('${inv.id}')" title="حذف">
+                🗑️
+              </button>
+            </div>
+          </div>
+        `).join('');
+            } catch (error) {
+                list.innerHTML = '<div class="empty-state"><p>حدث خطأ في التحميل</p></div>';
+            }
+        }
+
+        document.getElementById('invitationForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const invitation = {
+                groom_name: document.getElementById('groomName').value,
+                groom_father: document.getElementById('groomFather').value || null,
+                wedding_date: document.getElementById('weddingDate').value,
+                wedding_time: document.getElementById('weddingTime').value || null,
+                location_name: document.getElementById('locationName').value || null,
+                location_lat: document.getElementById('locationLat').value || null,
+                location_lng: document.getElementById('locationLng').value || null,
+                description: document.getElementById('description').value || null,
+                image_url: document.getElementById('imageUrl').value || null
+            };
+
+            try {
+                await createInvitation(invitation);
+                e.target.reset();
+                loadInvitationsList();
+                showToast('تمت إضافة الدعوة بنجاح ✅', 'success');
+            } catch (error) {
+                showToast('حدث خطأ في الإضافة ❌', 'error');
+            }
+        });
+
+        async function handleDeleteInvitation(id) {
+            if (!confirm('هل أنت متأكد من حذف هذه الدعوة؟')) return;
+
+            try {
+                await deleteInvitation(id);
+                loadInvitationsList();
+                showToast('تم حذف الدعوة ✅', 'success');
+            } catch (error) {
+                showToast('حدث خطأ في الحذف ❌', 'error');
+            }
+        }
+
+        // News
+        async function loadNewsList() {
+            const list = document.getElementById('newsList');
+            try {
+                const news = await getNews();
+                if (news.length === 0) {
+                    list.innerHTML = '<div class="empty-state"><p>لا توجد أخبار</p></div>';
+                    return;
+                }
+                list.innerHTML = news.map(item => `
+          <div class="admin-list-item">
+            <div class="item-info">
+              <h4>${item.title}</h4>
+              <p>📅 ${new Date(item.created_at).toLocaleDateString('ar-SA')}</p>
+            </div>
+            <div class="item-actions">
+              <button class="btn-icon delete" onclick="handleDeleteNews('${item.id}')" title="حذف">
+                🗑️
+              </button>
+            </div>
+          </div>
+        `).join('');
+            } catch (error) {
+                list.innerHTML = '<div class="empty-state"><p>حدث خطأ في التحميل</p></div>';
+            }
+        }
+
+        document.getElementById('newsForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const newsItem = {
+                title: document.getElementById('newsTitle').value,
+                content: document.getElementById('newsContent').value || null,
+                image_url: document.getElementById('newsImageUrl').value || null
+            };
+
+            try {
+                await createNews(newsItem);
+                e.target.reset();
+                loadNewsList();
+                showToast('تمت إضافة الخبر بنجاح ✅', 'success');
+            } catch (error) {
+                showToast('حدث خطأ في الإضافة ❌', 'error');
+            }
+        });
+
+        async function handleDeleteNews(id) {
+            if (!confirm('هل أنت متأكد من حذف هذا الخبر؟')) return;
+
+            try {
+                await deleteNews(id);
+                loadNewsList();
+                showToast('تم حذف الخبر ✅', 'success');
+            } catch (error) {
+                showToast('حدث خطأ في الحذف ❌', 'error');
+            }
+        }
+
+        // Open Google Maps for location selection
+        function openGoogleMaps() {
+            const lat = document.getElementById('locationLat').value || '24.7136';
+            const lng = document.getElementById('locationLng').value || '46.6753';
+            const url = `https://www.google.com/maps/@${lat},${lng},15z`;
+
+            window.open(url, '_blank');
+            showToast('💡 انسخ الإحداثيات من رابط الخريطة');
+        }
+
+        // Toast
+        function showToast(message, type = '') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast show ' + type;
+            setTimeout(() => toast.className = 'toast', 3000);
+        }
+    </script>
+</body>
+
+</html>

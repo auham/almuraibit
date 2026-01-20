@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,17 +9,18 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="المريبيط">
-  
+
   <title>دعوات المريبيط</title>
-  
+
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" href="icons/icon-192.png">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="stylesheet" href="css/style.css">
-  
+
   <!-- Supabase JS -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
+
 <body>
   <!-- Header -->
   <header class="header">
@@ -29,6 +31,7 @@
         <p>دعوات الزواج والمناسبات</p>
       </div>
     </div>
+    <a href="admin.html" class="header-admin-btn" title="لوحة التحكم">🔐</a>
   </header>
 
   <!-- Main Content -->
@@ -62,13 +65,13 @@
         <span class="icon">💒</span>
         <h2>دعوات الزواج القادمة</h2>
       </div>
-      
+
       <div class="invitations-grid" id="invitationsGrid">
         <!-- Loading State -->
         <div class="loading" id="loadingState">
           <div class="spinner"></div>
         </div>
-        
+
         <!-- Empty State (hidden by default) -->
         <div class="empty-state" id="emptyState" style="display: none;">
           <div class="icon">💍</div>
@@ -117,8 +120,8 @@
     }
 
     // Check if already installed as PWA
-    if (window.matchMedia('(display-mode: standalone)').matches || 
-        window.navigator.standalone === true) {
+    if (window.matchMedia('(display-mode: standalone)').matches ||
+      window.navigator.standalone === true) {
       document.getElementById('installBanner').style.display = 'none';
     }
 
@@ -166,19 +169,19 @@
       const date = new Date(invitation.wedding_date);
       const day = date.getDate();
       const month = date.toLocaleDateString('ar-SA', { month: 'short' });
-      const formattedDate = date.toLocaleDateString('ar-SA', { 
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
+      const formattedDate = date.toLocaleDateString('ar-SA', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
       });
-      
+
       return `
         <article class="invitation-card" onclick="window.location.href='invitation.html?id=${invitation.id}'">
-          ${invitation.image_url 
-            ? `<img src="${invitation.image_url}" alt="صورة الدعوة" class="card-image">`
-            : `<div class="card-image-placeholder">💒</div>`
-          }
+          ${invitation.image_url
+          ? `<img src="${invitation.image_url}" alt="صورة الدعوة" class="card-image">`
+          : `<div class="card-image-placeholder">💒</div>`
+        }
           <div class="card-content">
             <div class="card-header">
               <div>
@@ -214,4 +217,5 @@
     }
   </script>
 </body>
+
 </html>

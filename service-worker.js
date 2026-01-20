@@ -1,12 +1,12 @@
-const CACHE_NAME = 'almurabait-v1';
+const CACHE_NAME = 'almurabait-v2';
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/news.html',
-  '/invitation.html',
-  '/css/style.css',
-  '/js/app.js',
-  '/js/supabase.js',
+  './',
+  './index.html',
+  './news.html',
+  './invitation.html',
+  './css/style.css',
+  './js/app.js',
+  './js/supabase.js',
   'https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap'
 ];
 
@@ -17,6 +17,9 @@ self.addEventListener('install', event => {
       .then(cache => {
         console.log('Opened cache');
         return cache.addAll(urlsToCache);
+      })
+      .catch(err => {
+        console.log('Cache failed:', err);
       })
   );
   self.skipWaiting();
@@ -57,6 +60,10 @@ self.addEventListener('fetch', event => {
           return response;
         });
       })
+      .catch(() => {
+        // Return offline fallback if available
+        return caches.match('./index.html');
+      })
   );
 });
 
@@ -64,8 +71,8 @@ self.addEventListener('fetch', event => {
 self.addEventListener('push', event => {
   const options = {
     body: event.data ? event.data.text() : 'إشعار جديد من المريبيط',
-    icon: '/icons/icon-192.png',
-    badge: '/icons/icon-192.png',
+    icon: './icons/icon-192.png',
+    badge: './icons/icon-192.png',
     vibrate: [100, 50, 100],
     dir: 'rtl',
     lang: 'ar',
@@ -89,7 +96,7 @@ self.addEventListener('notificationclick', event => {
   event.notification.close();
   if (event.action === 'open' || !event.action) {
     event.waitUntil(
-      clients.openWindow('/')
+      clients.openWindow('./')
     );
   }
 });

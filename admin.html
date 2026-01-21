@@ -104,20 +104,11 @@
                         <label for="locationName">اسم المكان</label>
                         <input type="text" id="locationName" placeholder="قاعة الفرح - الرياض">
                     </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="locationLat">خط العرض (Latitude)</label>
-                            <input type="number" step="any" id="locationLat" placeholder="24.7136">
-                        </div>
-                        <div class="form-group">
-                            <label for="locationLng">خط الطول (Longitude)</label>
-                            <input type="number" step="any" id="locationLng" placeholder="46.6753">
-                        </div>
-                    </div>
                     <div class="form-group">
-                        <button type="button" class="btn btn-secondary btn-block" onclick="openGoogleMaps()">
-                            🗺️ اختيار الموقع من الخريطة
-                        </button>
+                        <label for="locationUrl">رابط الموقع (Google Maps)</label>
+                        <input type="url" id="locationUrl" placeholder="https://maps.google.com/...">
+                        <small style="color: var(--text-secondary); font-size: 0.8rem;">انسخ رابط الموقع من تطبيق خرائط
+                            قوقل</small>
                     </div>
                     <div class="form-group">
                         <label for="description">الوصف (اختياري)</label>
@@ -316,8 +307,7 @@
                 wedding_date: document.getElementById('weddingDate').value,
                 wedding_time: document.getElementById('weddingTime').value || null,
                 location_name: document.getElementById('locationName').value || null,
-                location_lat: document.getElementById('locationLat').value || null,
-                location_lng: document.getElementById('locationLng').value || null,
+                location_url: document.getElementById('locationUrl').value || null,
                 description: document.getElementById('description').value || null,
                 image_url: document.getElementById('imageUrl').value || null
             };
@@ -402,15 +392,7 @@
             }
         }
 
-        // Open Google Maps for location selection
-        function openGoogleMaps() {
-            const lat = document.getElementById('locationLat').value || '24.7136';
-            const lng = document.getElementById('locationLng').value || '46.6753';
-            const url = `https://www.google.com/maps/@${lat},${lng},15z`;
 
-            window.open(url, '_blank');
-            showToast('💡 انسخ الإحداثيات من رابط الخريطة');
-        }
 
         // Toast
         function showToast(message, type = '') {

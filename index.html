@@ -222,6 +222,12 @@
                 </div>
               ` : ''}
             </div>
+            ${invitation.location_url ? `
+              <a href="${invitation.location_url}" target="_blank" class="btn btn-secondary btn-location" onclick="event.stopPropagation()">
+                <span>🗺️</span>
+                <span>التوجه للموقع</span>
+              </a>
+            ` : ''}
           </div>
         </article>
       `;

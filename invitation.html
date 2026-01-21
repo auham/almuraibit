@@ -244,11 +244,11 @@
             }
 
             // Map link
-            if (invitation.location_lat && invitation.location_lng) {
+            if (invitation.location_url) {
                 document.getElementById('mapContainer').style.display = 'block';
                 // Set Google Maps link
                 const directionsBtn = document.getElementById('directionsBtn');
-                directionsBtn.href = `https://www.google.com/maps?q=${invitation.location_lat},${invitation.location_lng}`;
+                directionsBtn.href = invitation.location_url;
             }
         }
 
@@ -290,18 +290,16 @@ ${window.location.href}`;
         }
 
         function shareLocation() {
-            if (!currentInvitation || !currentInvitation.location_lat) return;
-
-            const url = `https://www.google.com/maps?q=${currentInvitation.location_lat},${currentInvitation.location_lng}`;
+            if (!currentInvitation || !currentInvitation.location_url) return;
 
             if (navigator.share) {
                 navigator.share({
                     title: `موقع حفل زواج ${currentInvitation.groom_name}`,
                     text: currentInvitation.location_name || 'موقع الحفل',
-                    url: url
+                    url: currentInvitation.location_url
                 });
             } else {
-                navigator.clipboard.writeText(url);
+                navigator.clipboard.writeText(currentInvitation.location_url);
                 showToast('تم نسخ الرابط 📋');
             }
         }

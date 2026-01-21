@@ -31,8 +31,7 @@
         });
     </script>
 
-    <!-- Google Maps (add your API key) -->
-    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&language=ar"></script>
+
 </head>
 
 <body>
@@ -98,17 +97,16 @@
                 <!-- Description -->
                 <div class="detail-description" id="description" style="display: none;"></div>
 
-                <!-- Map -->
+                <!-- Map Link -->
                 <div class="map-container" id="mapContainer" style="display: none;">
                     <div class="map-header">
                         <span class="icon">🗺️</span>
                         <h3>موقع الحفل</h3>
                     </div>
-                    <div id="map"></div>
                     <div class="map-actions">
                         <a href="#" class="btn btn-primary" id="directionsBtn" target="_blank">
-                            <span>🧭</span>
-                            <span>الاتجاهات</span>
+                            <span>📍</span>
+                            <span>فتح في خرائط قوقل</span>
                         </a>
                         <button class="btn btn-secondary" onclick="shareLocation()">
                             <span>📤</span>
@@ -245,47 +243,16 @@
                 document.getElementById('description').textContent = invitation.description;
             }
 
-            // Map
+            // Map link
             if (invitation.location_lat && invitation.location_lng) {
                 document.getElementById('mapContainer').style.display = 'block';
-                initMap(invitation.location_lat, invitation.location_lng, invitation.location_name);
-
-                // Set directions link
+                // Set Google Maps link
                 const directionsBtn = document.getElementById('directionsBtn');
-                directionsBtn.href = `https://www.google.com/maps/dir/?api=1&destination=${invitation.location_lat},${invitation.location_lng}`;
+                directionsBtn.href = `https://www.google.com/maps?q=${invitation.location_lat},${invitation.location_lng}`;
             }
         }
 
-        function initMap(lat, lng, title) {
-            const location = { lat: parseFloat(lat), lng: parseFloat(lng) };
 
-            try {
-                map = new google.maps.Map(document.getElementById('map'), {
-                    zoom: 15,
-                    center: location,
-                    styles: [
-                        { elementType: 'geometry', stylers: [{ color: '#1a1a2e' }] },
-                        { elementType: 'labels.text.stroke', stylers: [{ color: '#1a1a2e' }] },
-                        { elementType: 'labels.text.fill', stylers: [{ color: '#D4AF37' }] },
-                        { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#252542' }] },
-                        { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0f0f1a' }] }
-                    ]
-                });
-
-                new google.maps.Marker({
-                    position: location,
-                    map: map,
-                    title: title || 'موقع الحفل'
-                });
-            } catch (e) {
-                // If Google Maps fails, show a link instead
-                document.getElementById('map').innerHTML = `
-          <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-secondary);">
-            <p>تعذر تحميل الخريطة</p>
-          </div>
-        `;
-            }
-        }
 
         function shareInvitation() {
             if (!currentInvitation) return;

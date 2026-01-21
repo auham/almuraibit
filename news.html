@@ -73,7 +73,7 @@
     <nav class="bottom-nav">
         <div class="nav-container">
             <a href="index.html" class="nav-item">
-                <span class="icon">💒</span>
+                <span class="icon">💍</span>
                 <span>الدعوات</span>
             </a>
             <a href="news.html" class="nav-item active">
@@ -144,6 +144,12 @@
             <span>📅</span>
             <span>${formattedDate}</span>
           </div>
+          ${item.url ? `
+            <a href="${item.url}" target="_blank" class="btn btn-secondary btn-link" style="margin-top: 1rem;">
+              <span>🔗</span>
+              <span>اقرأ المزيد</span>
+            </a>
+          ` : ''}
         </article>
       `;
         }

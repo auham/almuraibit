@@ -105,14 +105,16 @@
             const isStandalone = window.navigator.standalone === true;
 
             if (isIOS && isStandalone) {
-                // Create a temporary link and trigger it
-                const link = document.createElement('a');
-                link.href = url;
-                link.target = '_blank';
-                link.rel = 'noopener noreferrer';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+                // iOS PWA cannot open external links in Safari
+                // The only solution is to copy the URL
+                if (confirm('iOS لا يسمح بفتح الروابط في Safari من التطبيق.\n\nهل تريد نسخ الرابط؟')) {
+                    navigator.clipboard.writeText(url).then(() => {
+                        alert('تم نسخ الرابط! ✓\n\nافتح Safari والصق الرابط');
+                    }).catch(() => {
+                        // Fallback for clipboard API failure
+                        prompt('انسخ الرابط:', url);
+                    });
+                }
             } else {
                 // For non-PWA or Android, use window.open
                 window.open(url, '_blank', 'noopener,noreferrer');

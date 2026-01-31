@@ -216,7 +216,9 @@
             }
 
             // Date - format both Hijri and Gregorian
-            const date = new Date(invitation.wedding_date);
+            // Parse date without timezone to avoid UTC offset issues
+            const dateParts = invitation.wedding_date.split('-');
+            const date = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], 12, 0, 0);
 
             // Hijri date (force Islamic calendar)
             const hijriFormatter = new Intl.DateTimeFormat('ar-SA-u-ca-islamic', {
@@ -332,4 +334,3 @@ ${window.location.href}`;
 
 
 </html>
-

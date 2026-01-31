@@ -304,14 +304,19 @@
 
     function createInvitationCard(invitation) {
       const date = new Date(invitation.wedding_date);
-      const day = date.getDate();
-      const month = date.toLocaleDateString('ar-SA', { month: 'short' });
-      const formattedDate = date.toLocaleDateString('ar-SA', {
+
+      // Use Hijri calendar for day and month
+      const hijriFormatter = new Intl.DateTimeFormat('ar-SA-u-ca-islamic', { day: 'numeric' });
+      const hijriMonthFormatter = new Intl.DateTimeFormat('ar-SA-u-ca-islamic', { month: 'short' });
+      const hijriDay = hijriFormatter.format(date);
+      const hijriMonth = hijriMonthFormatter.format(date);
+
+      const formattedDate = new Intl.DateTimeFormat('ar-SA-u-ca-islamic', {
         weekday: 'long',
         year: 'numeric',
         month: 'long',
         day: 'numeric'
-      });
+      }).format(date);
 
       return `
         <article class="invitation-card" onclick="window.location.href='invitation.html?id=${invitation.id}'">
@@ -326,8 +331,8 @@
                 ${invitation.groom_father ? `<p class="groom-father">ابن ${invitation.groom_father}</p>` : ''}
               </div>
               <div class="card-date">
-                <div class="day">${day}</div>
-                <div class="month">${month}</div>
+                <div class="day">${hijriDay}</div>
+                <div class="month">${hijriMonth}</div>
               </div>
             </div>
             <div class="card-details">

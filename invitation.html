@@ -59,7 +59,7 @@
 
             <!-- Hero Image -->
             <div class="detail-hero" id="heroSection">
-                <div class="detail-hero-placeholder">💒</div>
+                <div class="detail-hero-placeholder">💍</div>
                 <div class="detail-hero-overlay"></div>
             </div>
 
@@ -220,14 +220,19 @@
             const dateParts = invitation.wedding_date.split('-');
             const date = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], 12, 0, 0);
 
-            // Hijri date (force Islamic calendar)
-            const hijriFormatter = new Intl.DateTimeFormat('ar-SA-u-ca-islamic', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            });
-            const hijriDate = hijriFormatter.format(date);
+            // Hijri date - use manual if available, otherwise calculate
+            let hijriDate;
+            if (invitation.hijri_date) {
+                hijriDate = invitation.hijri_date;
+            } else {
+                const hijriFormatter = new Intl.DateTimeFormat('ar-SA-u-ca-islamic', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                hijriDate = hijriFormatter.format(date);
+            }
 
             // Gregorian date (force Gregorian calendar)
             const gregorianFormatter = new Intl.DateTimeFormat('ar-SA-u-ca-gregory', {
@@ -284,7 +289,7 @@
                 day: 'numeric'
             });
 
-            const text = `💒 دعوة زواج
+            const text = `💍 دعوة زواج
 
 العريس: ${currentInvitation.groom_name}
 ${currentInvitation.groom_father ? `ابن: ${currentInvitation.groom_father}` : ''}

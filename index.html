@@ -307,18 +307,32 @@
       const dateParts = invitation.wedding_date.split('-');
       const date = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], 12, 0, 0);
 
-      // Use Hijri calendar for day and month
-      const hijriFormatter = new Intl.DateTimeFormat('ar-SA-u-ca-islamic', { day: 'numeric' });
-      const hijriMonthFormatter = new Intl.DateTimeFormat('ar-SA-u-ca-islamic', { month: 'short' });
-      const hijriDay = hijriFormatter.format(date);
-      const hijriMonth = hijriMonthFormatter.format(date);
+      let hijriDay, hijriMonth, formattedDate;
 
-      const formattedDate = new Intl.DateTimeFormat('ar-SA-u-ca-islamic', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      }).format(date);
+      if (invitation.hijri_date) {
+        // Use manual hijri_date - extract day and month
+        const hijriParts = invitation.hijri_date.match(/(\d+)\s+(.+)/);
+        if (hijriParts) {
+          hijriDay = hijriParts[1];
+          hijriMonth = hijriParts[2].split(' ')[0]; // Get first word (month name)
+        } else {
+          hijriDay = '';
+          hijriMonth = invitation.hijri_date;
+        }
+        formattedDate = invitation.hijri_date;
+      } else {
+        // Calculate Hijri date
+        const hijriFormatter = new Intl.DateTimeFormat('ar-SA-u-ca-islamic', { day: 'numeric' });
+        const hijriMonthFormatter = new Intl.DateTimeFormat('ar-SA-u-ca-islamic', { month: 'short' });
+        hijriDay = hijriFormatter.format(date);
+        hijriMonth = hijriMonthFormatter.format(date);
+        formattedDate = new Intl.DateTimeFormat('ar-SA-u-ca-islamic', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        }).format(date);
+      }
 
       return `
         <article class="invitation-card" onclick="window.location.href='invitation.html?id=${invitation.id}'">

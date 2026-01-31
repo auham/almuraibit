@@ -72,7 +72,7 @@
 
         <!-- Tabs -->
         <div class="admin-tabs">
-            <button class="admin-tab active" onclick="switchTab('invitations')">💒 الدعوات</button>
+            <button class="admin-tab active" onclick="switchTab('invitations')">� الدعوات</button>
             <button class="admin-tab" onclick="switchTab('news')">📰 الأخبار</button>
         </div>
 
@@ -92,13 +92,19 @@
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="weddingDate">تاريخ الحفل *</label>
+                            <label for="weddingDate">تاريخ الحفل (ميلادي) *</label>
                             <input type="date" id="weddingDate" required>
                         </div>
                         <div class="form-group">
                             <label for="weddingTime">وقت الحفل</label>
                             <input type="time" id="weddingTime">
                         </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="hijriDate">التاريخ الهجري (يدوي)</label>
+                        <input type="text" id="hijriDate" placeholder="مثال: ١٨ ذو الحجة ١٤٤٧ هـ">
+                        <small style="color: var(--text-secondary); font-size: 0.8rem;">اكتب التاريخ الهجري يدوياً لضمان
+                            الدقة</small>
                     </div>
                     <div class="form-group">
                         <label for="locationName">اسم المكان</label>
@@ -119,7 +125,7 @@
                         <input type="url" id="imageUrl" placeholder="https://example.com/image.jpg">
                     </div>
                     <button type="submit" class="btn btn-primary btn-block">
-                        <span>💒</span>
+                        <span>�</span>
                         <span>إضافة الدعوة</span>
                     </button>
                 </form>
@@ -289,9 +295,12 @@
           <div class="admin-list-item">
             <div class="item-info">
               <h4>${inv.groom_name}</h4>
-              <p>📅 ${new Date(inv.wedding_date).toLocaleDateString('ar-SA')}</p>
+              <p>📅 ${inv.hijri_date || new Date(inv.wedding_date).toLocaleDateString('ar-SA')}</p>
             </div>
             <div class="item-actions">
+              <button class="btn-icon edit" onclick="handleEditInvitation('${inv.id}')" title="تعديل">
+                ✏️
+              </button>
               <button class="btn-icon delete" onclick="handleDeleteInvitation('${inv.id}')" title="حذف">
                 🗑️
               </button>
@@ -310,6 +319,7 @@
                 groom_name: document.getElementById('groomName').value,
                 groom_father: document.getElementById('groomFather').value || null,
                 wedding_date: document.getElementById('weddingDate').value,
+                hijri_date: document.getElementById('hijriDate').value || null,
                 wedding_time: document.getElementById('weddingTime').value || null,
                 location_name: document.getElementById('locationName').value || null,
                 location_url: document.getElementById('locationUrl').value || null,
@@ -318,12 +328,20 @@
             };
 
             try {
-                await createInvitation(invitation);
+                if (editingInvitationId) {
+                    // Update existing
+                    await updateInvitation(editingInvitationId, invitation);
+                    resetInvitationForm();
+                    showToast('تم تحديث الدعوة بنجاح ✅', 'success');
+                } else {
+                    // Create new
+                    await createInvitation(invitation);
+                    showToast('تمت إضافة الدعوة بنجاح ✅', 'success');
+                }
                 e.target.reset();
                 loadInvitationsList();
-                showToast('تمت إضافة الدعوة بنجاح ✅', 'success');
             } catch (error) {
-                showToast('حدث خطأ في الإضافة ❌', 'error');
+                showToast('حدث خطأ ❌', 'error');
             }
         });
 
@@ -337,6 +355,50 @@
             } catch (error) {
                 showToast('حدث خطأ في الحذف ❌', 'error');
             }
+        }
+
+        // Edit Invitation
+        let editingInvitationId = null;
+
+        async function handleEditInvitation(id) {
+            try {
+                const invitation = await getInvitationById(id);
+                if (!invitation) {
+                    showToast('لم يتم العثور على الدعوة', 'error');
+                    return;
+                }
+
+                editingInvitationId = id;
+
+                // Fill form with current data
+                document.getElementById('groomName').value = invitation.groom_name || '';
+                document.getElementById('groomFather').value = invitation.groom_father || '';
+                document.getElementById('weddingDate').value = invitation.wedding_date || '';
+                document.getElementById('hijriDate').value = invitation.hijri_date || '';
+                document.getElementById('weddingTime').value = invitation.wedding_time || '';
+                document.getElementById('locationName').value = invitation.location_name || '';
+                document.getElementById('locationUrl').value = invitation.location_url || '';
+                document.getElementById('description').value = invitation.description || '';
+                document.getElementById('imageUrl').value = invitation.image_url || '';
+
+                // Change form title and button
+                document.querySelector('#invitationsSection .admin-card h3').textContent = '✏️ تعديل الدعوة';
+                document.querySelector('#invitationForm button[type="submit"] span:last-child').textContent = 'حفظ التعديلات';
+
+                // Scroll to form
+                document.getElementById('invitationForm').scrollIntoView({ behavior: 'smooth' });
+
+                showToast('جاهز للتعديل - عدّل البيانات واضغط حفظ التعديلات', 'info');
+            } catch (error) {
+                showToast('حدث خطأ', 'error');
+            }
+        }
+
+        function resetInvitationForm() {
+            editingInvitationId = null;
+            document.getElementById('invitationForm').reset();
+            document.querySelector('#invitationsSection .admin-card h3').textContent = '➕ إضافة دعوة جديدة';
+            document.querySelector('#invitationForm button[type="submit"] span:last-child').textContent = 'إضافة الدعوة';
         }
 
         // News
